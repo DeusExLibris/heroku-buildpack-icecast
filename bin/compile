@@ -1,0 +1,32 @@
+#!/bin/sh
+
+indent() {
+  sed -u 's/^/       /'
+}
+
+echo "-----> Install icecast"
+BUILD_DIR=$1
+VENDOR_DIR="vendor"
+DOWNLOAD_URL="http://download.opensuse.org/repositories/home:/dm8tbr/xUbuntu_14.04/i386/icecast2_2.4.1-2_i386.deb"
+FILENAME=`echo $DOWNLOAD_URL | sed -e 's/.*\/\(.*\)$/\1/'`
+
+echo "DOWNLOAD_URL = " $DOWNLOAD_URL | indent
+
+cd $BUILD_DIR
+mkdir -p $VENDOR_DIR/icecast
+cd $VENDOR_DIR
+curl -L --silent $DOWNLOAD_URL > $FILENAME
+echo "Installing Package " $FILENAME | indent
+dpkg-deb -x $FILENAME ./icecast
+
+echo "Moving dependencies" | indent
+cd icecast
+mkdir -p conf bin share log run
+cp usr/bin/* bin
+cp -R usr/share/icecast2/* share
+cp $BUILD_DIR/icecast.xml $BUILD_DIR/$VENDOR_DIR
+
+echo "exporting PATH" | indent
+PROFILE_PATH="$BUILD_DIR/.profile.d/icecast.sh"
+mkdir -p $(dirname $PROFILE_PATH)
+echo 'export PATH="$PATH:$HOME/vendor/icecast/bin"' >> $PROFILE_PATH
